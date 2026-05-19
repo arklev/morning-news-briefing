@@ -2,6 +2,16 @@ import feedparser
 import time
 from datetime import datetime, timedelta
 import logging
+import re
+
+def extract_image_url(description):
+    if not description:
+        return None
+    # Look for img src in the HTML description
+    match = re.search(r'<img [^>]*src=[\'"]([^\'"]+)[\'"]', description)
+    if match:
+        return match.group(1)
+    return None
 
 def get_recent_articles(feeds, hours=48):
     articles = []
@@ -28,14 +38,19 @@ def get_recent_articles(feeds, hours=48):
                 if pub_dt and pub_dt < cutoff:
                     continue
 
+                # Extract image URL from description
+                image_url = extract_image_url(getattr(entry, 'description', ''))
+                
                 # Trim summary heavily to save tokens
                 summary_text = getattr(entry, 'summary', '')
-                clean_summary = summary_text[:300] 
+                # Remove HTML tags from summary for cleaner AI processing
+                clean_summary = re.sub(r'<[^>]+>', '', summary_text)[:300] 
                 
                 articles.append({
                     'title': title,
                     'summary': clean_summary,
-                    'link': entry.link
+                    'link': entry.link,
+                    'image': image_url
                 })
                 seen_titles.add(title.lower())
         except Exception as e:

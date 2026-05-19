@@ -1,32 +1,56 @@
 import google.generativeai as genai
 import logging
+import json
+import re
 from config import GEMINI_API_KEY
 
 def summarize_news(articles):
     if not articles:
-        return "לא נמצאו חדשות משמעותיות ב-12 השעות האחרונות."
+        return []
 
     try:
         genai.configure(api_key=GEMINI_API_KEY)
         model = genai.GenerativeModel('gemini-3.1-flash-lite')
         
-        content = "\n".join([f"T: {a['title']}\nS: {a['summary']}\nL: {a['link']}" for a in articles])
+        input_list = []
+        for i, a in enumerate(articles):
+            input_list.append('INDEX: ' + str(i) + '\nTITLE: ' + articles[i]['title'] + '\nSUMMARY: ' + articles[i]['summary'])
+            
+        content_str = '\n---\n'.join(input_list)
         
         prompt = (
-            "Summarize the following articles into the 5 most interesting news items. "
-            "The output MUST be in Hebrew. "
-            "For each item: "
-            "1. Use a bullet point (•) instead of numbers to ensure correct alignment for Hebrew. "
-            "2. Provide a concise summary. "
-            "3. Include the link at the end of the item as [קרא עוד](URL). "
-            "The output must be formatted clearly for a Discord webhook using markdown. "
-            "DO NOT include any introductory or concluding text. "
-            "Ensure the text flows naturally from right to left.\n\n"
-            f"{content}"
+            'Select the 5 most interesting news items from the list below. '
+            'For each item, write a one-sentence summary in Hebrew. '
+            'You MUST return the result in this exact JSON format: '
+            '[ {"index": 0, "he_summary": "..."}, ... ] '
+            'Return ONLY the JSON array. No other text.\n\n'
+            + content_str
         )
         
         response = model.generate_content(prompt)
-        return response.text.strip()
+        text = response.text.strip()
+        
+        # Clean up JSON response without using backticks in the source code
+        text = text.replace('json', '')
+        for c in ['\x60']: # Hex for backtick
+            text = text.replace(c, '')
+        text = text.strip()
+        
+        selected_data = json.loads(text)
+        
+        results = []
+        for item in selected_data:
+            idx = int(item['index'])
+            if 0 <= idx < len(articles):
+                orig = articles[idx]
+                results.append({
+                    'title': orig['title'],
+                    'summary': item['he_summary'],
+                    'link': orig['link'],
+                    'image': orig['image']
+                })
+        
+        return results[:5]
     except Exception as e:
-        logging.error(f'AI Summarization failed: {e}')
-        return "שגיאה ביצירת הסיכום. אנא בדוק את הלוגים."
+        logging.error('AI Summarization failed: ' + str(e))
+        return []
