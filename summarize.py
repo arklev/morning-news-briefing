@@ -8,7 +8,8 @@ def summarize_news(articles):
 
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel('gemini-3-flash-preview')
+        # Using gemini-3.1-flash-lite for maximum token efficiency as requested
+        model = genai.GenerativeModel('gemini-3.1-flash-lite')
         
         content = "\n".join([f"T: {a['title']}\nS: {a['summary']}\nL: {a['link']}" for a in articles])
         
