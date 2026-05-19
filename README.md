@@ -19,7 +19,11 @@ A lightweight automated news briefing system designed for Debian on older hardwa
    ```
 
 3. **Configure Environment:**
-   Edit the `.env` file with your keys (already pre-configured in this setup).
+   Edit the .env file with your keys. Required variables:
+   - GEMINI_API_KEY: Your Google Gemini API key.
+   - NOTIFICATION_CHANNEL: 'discord' or 'ntfy'.
+   - DISCORD_WEBHOOK_URL: (If using Discord) Your webhook URL.
+   - NTFY_URL, NTFY_USER, NTFY_PASS: (If using ntfy) Your ntfy.sh settings.
 
 ## Running
 
@@ -29,17 +33,18 @@ A lightweight automated news briefing system designed for Debian on older hardwa
 ```
 
 ### Automatic Daily Execution (Cron)
-To run every morning at 8:00 AM, add this to your crontab (`crontab -e`):
+To run every morning at 8:00 AM, add this to your crontab (crontab -e):
 ```bash
 0 8 * * * /home/arklev/morning_briefing/venv/bin/python3 /home/arklev/morning_briefing/main.py
 ```
 
 ## Features
-- **RSS Fetching:** Pulls from TechCrunch, The Verge, and AI News.
-- **AI Summary:** Uses Google Gemini 1.5 Flash (low latency/high efficiency).
+- **RSS Fetching:** Targeted Tech news from Ynet RSS feeds.
+- **AI Summary:** Uses Google Gemini for high-quality, concise briefings.
+- **Hebrew Support:** Delivers news summaries in Hebrew.
+- **Multi-Channel Notifications:** Support for Discord (with rich Embeds) and ntfy.
 - **Lightweight:** Minimal dependencies, low memory footprint.
-- **Error Handling:** Logs failures to `morning_briefing.log`.
-- **ntfy Integration:** Sends formatted notifications to your phone.
+- **Robust Logging:** Detailed execution logs saved locally.
 
 ## Troubleshooting
-Check `morning_briefing.log` for errors if notifications are not arriving.
+Check morning_briefing.log for errors if notifications are not arriving.
